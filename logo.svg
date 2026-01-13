@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#1a1a2e"/>
+  
+  <!-- Cigarette body (white/cream paper) -->
+  <rect x="136" y="230" width="260" height="52" rx="6" ry="6" fill="#f5f0e6"/>
+  
+  <!-- Cigarette lines (paper texture) -->
+  <line x1="176" y1="230" x2="176" y2="282" stroke="#e8e0d0" stroke-width="1"/>
+  <line x1="216" y1="230" x2="216" y2="282" stroke="#e8e0d0" stroke-width="1"/>
+  <line x1="256" y1="230" x2="256" y2="282" stroke="#e8e0d0" stroke-width="1"/>
+  <line x1="296" y1="230" x2="296" y2="282" stroke="#e8e0d0" stroke-width="1"/>
+  
+  <!-- Filter (orange/tan) -->
+  <rect x="326" y="230" width="80" height="52" rx="6" ry="6" fill="#d4a574"/>
+  <rect x="326" y="230" width="80" height="52" rx="6" ry="6" fill="url(#filterGradient)"/>
+  
+  <!-- Filter texture lines -->
+  <line x1="346" y1="230" x2="346" y2="282" stroke="#c4956a" stroke-width="1"/>
+  <line x1="366" y1="230" x2="366" y2="282" stroke="#c4956a" stroke-width="1"/>
+  <line x1="386" y1="230" x2="386" y2="282" stroke="#c4956a" stroke-width="1"/>
+  
+  <!-- Burning end glow -->
+  <ellipse cx="136" cy="256" rx="20" ry="26" fill="#ff6b35"/>
+  <ellipse cx="136" cy="256" rx="14" ry="20" fill="#ff8c42"/>
+  <ellipse cx="136" cy="256" rx="8" ry="14" fill="#ffd700"/>
+  
+  <!-- Ash -->
+  <rect x="106" y="238" width="30" height="36" rx="4" ry="4" fill="#4a4a4a"/>
+  <rect x="106" y="238" width="30" height="36" rx="4" ry="4" fill="url(#ashGradient)"/>
+  
+  <!-- Smoke wisps -->
+  <g opacity="0.7">
+    <path d="M121 200 Q111 180 121 160 Q131 140 116 120" 
+          stroke="#a0a0a0" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M131 195 Q146 170 131 145 Q116 120 136 100" 
+          stroke="#b0b0b0" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.4"/>
+    <path d="M111 205 Q96 185 106 165 Q116 145 96 130" 
+          stroke="#909090" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.3"/>
+  </g>
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="filterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e0b088;stop-opacity:0.3"/>
+      <stop offset="50%" style="stop-color:#d4a574;stop-opacity:0"/>
+      <stop offset="100%" style="stop-color:#c49060;stop-opacity:0.3"/>
+    </linearGradient>
+    <linearGradient id="ashGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3a3a3a;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#5a5a5a;stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+</svg>
