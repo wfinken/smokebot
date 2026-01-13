@@ -4,3 +4,7 @@ compatibility_date = "2024-01-01"
 
 [observability]
 enabled = true
+
+[vars]
+DISCORD_APP_ID = "1460447419333349589"
+DISCORD_PUBLIC_KEY = "f227666f3fe103035d51a0214472e8d9a6061c1914463a556527641149fd0fea"
