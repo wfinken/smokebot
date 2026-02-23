@@ -44,17 +44,19 @@ export default {
 
         // 3. SLASH COMMANDS
         if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-            if (interaction.data.name === 'smoketime') {
+            if (interaction.data.name === 'smoketime' || interaction.data.name === 'smoke') {
                 const requesterId = interaction.member.user.id;
                 const mentionedArg = interaction.data.options?.find(opt => opt.name === 'user');
-                let content = '🚬 **Smoke Break Requested!**';
+
+                let description = 'What is the verdict?';
+                let title = '🚬 Smoke Break Requested!';
                 let targetId = null;
 
                 if (mentionedArg) {
-                    content = `🚬 **Smoke Break Requested for <@${mentionedArg.value}>!**`;
+                    title = '🚬 Smoke Break Requested!';
+                    description = `<@${mentionedArg.value}>, you have been summoned for a smoke break!\nWhat is the verdict?`;
                     targetId = mentionedArg.value;
                 }
-                content += ' \nWhat is the verdict?';
 
                 const components = [
                     {
@@ -65,7 +67,7 @@ export default {
                     },
                     {
                         type: MessageComponentTypes.BUTTON,
-                        custom_id: `smoke_deny_${requesterId}`,
+                        custom_id: `smoke_deny_${requesterId}_${targetId || 'none'}`,
                         label: 'Deny',
                         style: ButtonStyleTypes.DANGER,
                     },
@@ -80,7 +82,11 @@ export default {
                 return Response.json({
                     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                     data: {
-                        content: content,
+                        embeds: [{
+                            title: title,
+                            description: description,
+                            color: 0xFFA500, // Orange
+                        }],
                         components: [{
                             type: MessageComponentTypes.ACTION_ROW,
                             components: components
@@ -101,6 +107,19 @@ export default {
                 const parts = customId.split('_');
                 const requesterId = parts[2];
                 const targetId = parts[3];
+
+                if (targetId !== 'none' && userId !== targetId) {
+                    return Response.json({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: {
+                            embeds: [{
+                                description: `❌ Only <@${targetId}> can request a specific time!`,
+                                color: 0xFF0000,
+                            }],
+                            flags: 64
+                        }
+                    });
+                }
 
                 return Response.json({
                     type: 9, // MODAL
@@ -132,33 +151,28 @@ export default {
 
                 const timeValue = interaction.data.components[0].components[0].value;
 
-                // Who needs to accept this?
-                // If the original target requested time, the original requester needs to accept.
-                // If the original requester requested time (self-negotiation?), the target needs to accept.
-                // For simplicity, let's just say the "other party" needs to accept.
-                // If there was no specific target, anyone can accept.
-
-                // We'll treat the person who submitted the modal as the "TimeRequester".
-                // The person who needs to accept is the "Other".
-                
-                let content = `⏰ **${username} requests ${timeValue}.**`;
-                let acceptBtnId = `smoke_accept_${originalRequesterId}_${userId}`; // Fallback logic
+                let description = `**${username} requests ${timeValue}.**`;
+                let acceptBtnId = `smoke_accept_${originalRequesterId}_${userId}`; // Fallback
 
                 if (userId === originalRequesterId && originalTargetId) {
-                    content += ` <@${originalTargetId}>, does this work?`;
+                    description += `\n<@${originalTargetId}>, does this work?`;
                     acceptBtnId = `smoke_accept_${userId}_${originalTargetId}`;
                 } else if (userId === originalTargetId) {
-                    content += ` <@${originalRequesterId}>, does this work?`;
+                    description += `\n<@${originalRequesterId}>, does this work?`;
                     acceptBtnId = `smoke_accept_${originalTargetId}_${originalRequesterId}`;
                 } else {
-                     content += ` Any takers?`;
-                     acceptBtnId = `smoke_accept_${originalRequesterId}_${userId}`;
+                    description += `\nAny takers?`;
+                    acceptBtnId = `smoke_accept_${originalRequesterId}_${userId}`;
                 }
 
                 return Response.json({
                     type: InteractionResponseType.UPDATE_MESSAGE,
                     data: {
-                        content: content,
+                        embeds: [{
+                            title: '⏰ Time Requested',
+                            description: description,
+                            color: 0x3498DB, // Blue
+                        }],
                         components: [{
                             type: MessageComponentTypes.ACTION_ROW,
                             components: [
@@ -170,7 +184,7 @@ export default {
                                 },
                                 {
                                     type: MessageComponentTypes.BUTTON,
-                                    custom_id: `smoke_deny_${originalRequesterId}`,
+                                    custom_id: acceptBtnId.replace('smoke_accept_', 'smoke_deny_'),
                                     label: 'Deny',
                                     style: ButtonStyleTypes.DANGER,
                                 }
@@ -183,26 +197,36 @@ export default {
             // --- ACCEPT ---
             if (customId.startsWith('smoke_accept_')) {
                 const parts = customId.split('_');
-                // The structure here is looser. We just need to capture who the two participants are.
-                // Generally: smoke_accept_<PartnerA>_<PartnerB>
-                // Whoever clicks it, becomes one of the confirmed participants effectively.
-                
                 const p1 = parts[2];
                 const p2 = parts[3] !== 'none' ? parts[3] : userId;
 
-                // We normalize by storing both IDs.
-                // We don't strictly enforce who clicks "Accept" unless we want to lock it to the target.
-                // Let's assume standard flow: If you aren't involved, you probably shouldn't click, but we won't strictly block for open requests.
+                // Validate Target if one exists
+                const targetId = parts[3];
+                if (targetId !== 'none' && userId !== targetId) {
+                    return Response.json({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: {
+                            embeds: [{
+                                description: `❌ Only <@${targetId}> can accept this request!`,
+                                color: 0xFF0000,
+                            }],
+                            flags: 64
+                        }
+                    });
+                }
 
                 return Response.json({
                     type: InteractionResponseType.UPDATE_MESSAGE,
                     data: {
-                        content: `✅ **Accepted!** \nParticipants: <@${p1}> & <@${p2}>.\nEither of you can signal when you are On The Way.`,
+                        embeds: [{
+                            title: '✅ Accepted!',
+                            description: `Participants: <@${p1}> & <@${p2}>.\nEither of you can signal when you are On The Way.`,
+                            color: 0x2ECC71, // Green
+                        }],
                         components: [{
                             type: MessageComponentTypes.ACTION_ROW,
                             components: [{
                                 type: MessageComponentTypes.BUTTON,
-                                // Store both participants. We don't know who will click OTW yet.
                                 custom_id: `smoke_otw_${p1}_${p2}`,
                                 label: 'OTW 🏃',
                                 style: ButtonStyleTypes.PRIMARY,
@@ -214,10 +238,29 @@ export default {
 
             // --- DENY ---
             if (customId.startsWith('smoke_deny_')) {
+                const parts = customId.split('_');
+                const targetId = parts[3];
+
+                if (targetId !== 'none' && userId !== targetId) {
+                    return Response.json({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: {
+                            embeds: [{
+                                description: `❌ Only <@${targetId}> can deny this request!`,
+                                color: 0xFF0000,
+                            }],
+                            flags: 64
+                        }
+                    });
+                }
                 return Response.json({
                     type: InteractionResponseType.UPDATE_MESSAGE,
                     data: {
-                        content: `🚫 **Denied by ${username}.** \nMaybe later!`,
+                        embeds: [{
+                            title: '🚫 Denied',
+                            description: `Denied by ${username}.\nMaybe later!`,
+                            color: 0xE74C3C, // Red
+                        }],
                         components: [],
                     },
                 });
@@ -229,29 +272,33 @@ export default {
                 const u1 = parts[2];
                 const u2 = parts[3];
 
-                // Check if clicker is one of the participants
                 if (userId !== u1 && userId !== u2) {
-                     return Response.json({
+                    return Response.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                         data: {
-                            content: `❌ You are not part of this smoke break!`,
+                            embeds: [{
+                                description: `❌ You are not part of this smoke break!`,
+                                color: 0xFF0000,
+                            }],
                             flags: 64
                         }
                     });
                 }
 
-                // Identify the "Other" user who needs to acknowledge
                 const otherUser = (userId === u1) ? u2 : u1;
 
                 return Response.json({
                     type: InteractionResponseType.UPDATE_MESSAGE,
                     data: {
-                        content: `🏃 **${username} is On The Way!** \n<@${otherUser}>, please acknowledge!`,
+                        embeds: [{
+                            title: '🏃 On The Way!',
+                            description: `**${username} is On The Way!**\n<@${otherUser}>, please acknowledge!`,
+                            color: 0x3498DB, // Blue
+                        }],
                         components: [{
                             type: MessageComponentTypes.ACTION_ROW,
                             components: [{
                                 type: MessageComponentTypes.BUTTON,
-                                // smoke_ack_<OTW_User>_<Ack_User>
                                 custom_id: `smoke_ack_${userId}_${otherUser}`,
                                 label: 'Acknowledge 👍',
                                 style: ButtonStyleTypes.SECONDARY,
@@ -268,10 +315,13 @@ export default {
                 const expectedAckUser = parts[3];
 
                 if (userId !== expectedAckUser) {
-                     return Response.json({
+                    return Response.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                         data: {
-                            content: `❌ Waiting for specific acknowledgement from <@${expectedAckUser}>!`,
+                            embeds: [{
+                                description: `❌ Waiting for specific acknowledgement from <@${expectedAckUser}>!`,
+                                color: 0xFF0000,
+                            }],
                             flags: 64
                         }
                     });
@@ -280,12 +330,15 @@ export default {
                 return Response.json({
                     type: InteractionResponseType.UPDATE_MESSAGE,
                     data: {
-                        content: `👍 **Acknowledged by ${username}!** \nWaiting for <@${otwUser}> to arrive...`,
+                        embeds: [{
+                            title: '👍 Acknowledged',
+                            description: `**Acknowledged by ${username}!**\nWaiting for <@${otwUser}> to arrive...`,
+                            color: 0xF1C40F, // Yellow
+                        }],
                         components: [{
                             type: MessageComponentTypes.ACTION_ROW,
                             components: [{
                                 type: MessageComponentTypes.BUTTON,
-                                // smoke_aqui_<OTW_User>
                                 custom_id: `smoke_aqui_${otwUser}`,
                                 label: 'Aqui! 📍',
                                 style: ButtonStyleTypes.SUCCESS,
@@ -304,7 +357,10 @@ export default {
                     return Response.json({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                         data: {
-                            content: `❌ Only the person who was OTW (<@${otwUser}>) can confirm arrival!`,
+                            embeds: [{
+                                description: `❌ Only the person who was OTW (<@${otwUser}>) can confirm arrival!`,
+                                color: 0xFF0000,
+                            }],
                             flags: 64
                         }
                     });
@@ -313,7 +369,11 @@ export default {
                 return Response.json({
                     type: InteractionResponseType.UPDATE_MESSAGE,
                     data: {
-                        content: `📍 **${username} is Aqui!** \nSession active. ☁️`,
+                        embeds: [{
+                            title: '📍 Aqui!',
+                            description: `**${username} is Aqui!**\nSession active. ☁️`,
+                            color: 0x2ECC71, // Green
+                        }],
                         components: [],
                     },
                 });

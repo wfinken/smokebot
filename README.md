@@ -7,7 +7,9 @@ A Discord bot for coordinating smoke breaks with friends. Built with Cloudflare 
 ## Features
 
 - `/smoketime` - Initiate a smoke break request
+- `/smoke` - Quick alias for smoketime
 - `/smoketime @user` - Request a smoke break with a specific person
+- `@smokebot smoke` - Run smoke command via app mention
 - Interactive button flow: Accept → OTW → Aqui
 - "15 Minutes" delay option
 - Acknowledgement modal for personalized responses

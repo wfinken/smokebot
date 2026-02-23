@@ -11,32 +11,42 @@ if (!appId || !token) {
 
 const url = `https://discord.com/api/v10/applications/${appId}/commands`;
 
-const command = {
-    name: 'smoketime',
-    description: 'Initiate the smoke signal',
-    type: 1, // 1 = CHAT_INPUT (Slash Command)
-    options: [
-        {
-            name: 'user',
-            description: 'Tag a specific person for smoketime',
-            type: 6, // 6 = USER type
-            required: false,
-        },
-    ],
-};
+const sharedOptions = [
+    {
+        name: 'user',
+        description: 'Tag a specific person for smoketime',
+        type: 6, // 6 = USER type
+        required: false,
+    },
+];
+
+const commands = [
+    {
+        name: 'smoketime',
+        description: 'Initiate the smoke signal',
+        type: 1, // 1 = CHAT_INPUT (Slash Command)
+        options: sharedOptions,
+    },
+    {
+        name: 'smoke',
+        description: 'Quick smoke break request',
+        type: 1, // 1 = CHAT_INPUT (Slash Command)
+        options: sharedOptions,
+    },
+];
 
 async function register() {
     const response = await fetch(url, {
-        method: 'POST',
+        method: 'PUT',
         headers: {
             Authorization: `Bot ${token}`,
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(command),
+        body: JSON.stringify(commands),
     });
 
     if (response.ok) {
-        console.log('✅ Command "/smoketime" registered successfully!');
+        console.log('✅ Commands "/smoketime" and "/smoke" registered successfully!');
     } else {
         const data = await response.json();
         console.error('❌ Error registering command:', JSON.stringify(data, null, 2));
